@@ -9,13 +9,11 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class FoodItemSerializer(serializers.ModelSerializer):
-    
+
+    category = CategorySerializer()
     class Meta:
         model = FoodItem
-        fields = ['id', 'name', 'description', 'price']
-
-
-
+        fields = ['id', 'name', 'description', 'price','image','category']
 
 
 

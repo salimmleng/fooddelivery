@@ -11,6 +11,7 @@ from .permissions import IsAdminOrReadOnly
 
 
 class CategoryListView(APIView):
+
     permission_classes = [IsAdminOrReadOnly]
 
     def get(self, request, format=None):
@@ -19,7 +20,7 @@ class CategoryListView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, format=None):
-        # Only admins are allowed to post due to the applied permission
+        # Only admins can post
         serializer = CategorySerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -29,6 +30,9 @@ class CategoryListView(APIView):
 
 
 class FoodItemsByCategoryAPIView(APIView):
+
+    permission_classes = [IsAdminOrReadOnly]
+
     def get(self, request, category_name=None, id=None):
         if id is not None:
             # Fetch the specific food item by ID
@@ -51,9 +55,42 @@ class FoodItemsByCategoryAPIView(APIView):
         serializer = FoodItemSerializer(food_items, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
+    def post(self, request, category_name=None):
+        # Only admins can post
+        serializer = FoodItemSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 
+    def put(self, request, id=None):
+        # Only admins can update (PUT) a specific food item
+        try:
+            food_item = FoodItem.objects.get(id=id)
+        except FoodItem.DoesNotExist:
+            return Response({'detail': 'Food item not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = FoodItemSerializer(food_item, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, id=None):
+        # Only admins can delete a specific food item
+        try:
+            food_item = FoodItem.objects.get(id=id)
+        except FoodItem.DoesNotExist:
+            return Response({'detail': 'Food item not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        food_item.delete()
+        return Response({'detail': 'Food item deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
     
-    
+
+
+
+
 
 class CheckoutView(APIView):
     permission_classes = [IsAuthenticated]

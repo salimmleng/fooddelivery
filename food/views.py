@@ -1,14 +1,15 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Category, FoodItem,Order
+from .models import Category, FoodItem,Order,Review
 from django.contrib.auth.models import User
 from rest_framework.permissions import IsAuthenticated
-from .serializers import CategorySerializer, FoodItemSerializer,OrderSerializer
+from .serializers import CategorySerializer, FoodItemSerializer,OrderSerializer,ReviewSerializer
 # from .permissions import IsAdmin
 from django.contrib.auth import get_user_model
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from .permissions import IsAdminOrReadOnly
+from django.shortcuts import get_object_or_404
 
 User = get_user_model()
 
@@ -165,4 +166,64 @@ class CheckoutView(APIView):
             return Response({'success': True, 'message': 'Order deleted successfully'}, status=status.HTTP_200_OK)
         
         return Response({'success': False, 'message': 'Order ID not provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+# review
+
+class ReviewCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
+
+    # POST method for creating a review
+    def post(self, request, *args, **kwargs):
+        # Get the authenticated user
+        user = request.user
+        
+        # Extract order and review details from the request data
+        order_id = request.data.get('order')
+        rating = request.data.get('rating')
+        review_text = request.data.get('review_text')
+
+        # Ensure the order exists and belongs to the user
+        order = get_object_or_404(Order, id=order_id, user=user)
+
+        # Check if the user already left a review for this order
+        if Review.objects.filter(user=user, order=order).exists():
+            return Response({'error': 'You have already reviewed this order.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create a new review
+        review = Review.objects.create(
+            user=user,
+            order=order,
+            rating=rating,
+            review_text=review_text
+        )
+
+        # Serialize the newly created review and return a response
+        serializer = ReviewSerializer(review)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    # GET method for retrieving reviews
+    def get(self, request, *args, **kwargs):
+        # Get the authenticated user
+        user = request.user
+
+        # Optionally filter reviews by order if an 'order' query parameter is provided
+        order_id = request.query_params.get('order')
+
+        if order_id:
+            # Get reviews for a specific order that belongs to the user
+            order = get_object_or_404(Order, id=order_id, user=user)
+            reviews = Review.objects.filter(order=order)
+        else:
+            # Get all reviews made by the user
+            reviews = Review.objects.all()
+
+        # Serialize the reviews
+        serializer = ReviewSerializer(reviews, many=True)
+        
+        # Return the serialized reviews
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 

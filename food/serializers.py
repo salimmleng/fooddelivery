@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, FoodItem, Order, OrderItem
+from .models import Category, FoodItem, Order, OrderItem,Review
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -53,3 +53,11 @@ class OrderSerializer(serializers.ModelSerializer):
         
         return order
     
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)  # Read-only username field
+
+    class Meta:
+        model = Review
+        fields = ['id', 'username', 'order', 'rating', 'review_text', 'created_at']

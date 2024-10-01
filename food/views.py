@@ -6,9 +6,11 @@ from django.contrib.auth.models import User
 from rest_framework.permissions import IsAuthenticated
 from .serializers import CategorySerializer, FoodItemSerializer,OrderSerializer
 # from .permissions import IsAdmin
+from django.contrib.auth import get_user_model
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from .permissions import IsAdminOrReadOnly
 
+User = get_user_model()
 
 class CategoryListView(APIView):
 
@@ -112,10 +114,11 @@ class CheckoutView(APIView):
                 orders = Order.objects.filter(user=user)
             except User.DoesNotExist:
                 return Response({'success': False, 'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+            
         elif order_id:
             # Retrieve a specific order by ID for the authenticated user
             try:
-                order = Order.objects.get(id=order_id, user=request.user)
+                order = Order.objects.get(id=order_id)
             except Order.DoesNotExist:
                 return Response({'success': False, 'message': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -123,8 +126,43 @@ class CheckoutView(APIView):
             serializer = OrderSerializer(order)
             return Response({'success': True, 'order': serializer.data}, status=status.HTTP_200_OK)
         else:
-            # Retrieve all orders for the authenticated user
-            orders = Order.objects.filter(user=request.user)
+           
+            orders = Order.objects.all()
 
         serializer = OrderSerializer(orders, many=True)
-        return Response({'success': True, 'orders': serializer.data}, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+    def patch(self, request, order_id=None):
+        # Partial update of the order
+        if order_id:
+            try:
+                order = Order.objects.get(id=order_id)
+            except Order.DoesNotExist:
+                return Response({'success': False, 'message': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+            print("Incoming data:", request.data)
+
+            # Use partial=True to allow partial updates
+            serializer = OrderSerializer(order, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({'success': True, 'order': serializer.data}, status=status.HTTP_200_OK)
+            return Response({'success': False, 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'success': False, 'message': 'Order ID not provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+    def delete(self, request, order_id=None):
+        if order_id:
+            try:
+                order = Order.objects.get(id=order_id, user=request.user)  # Delete for the authenticated user
+            except Order.DoesNotExist:
+                return Response({'success': False, 'message': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
+
+            order.delete()  # Delete the order
+            return Response({'success': True, 'message': 'Order deleted successfully'}, status=status.HTTP_200_OK)
+        
+        return Response({'success': False, 'message': 'Order ID not provided'}, status=status.HTTP_400_BAD_REQUEST)
+

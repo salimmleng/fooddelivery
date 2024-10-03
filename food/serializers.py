@@ -24,7 +24,7 @@ class FoodItemSerializer(serializers.ModelSerializer):
 class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItem
-        fields = ['name', 'quantity', 'price']
+        fields = ['id', 'name', 'quantity', 'price']
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -57,7 +57,8 @@ class OrderSerializer(serializers.ModelSerializer):
 
 class ReviewSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)  # Read-only username field
+    order_items = OrderItemSerializer(many=True, source='order.order_items', read_only=True)  # Access related order items
 
     class Meta:
         model = Review
-        fields = ['id', 'username', 'order', 'rating', 'review_text', 'created_at']
+        fields = ['id', 'username', 'order_items', 'rating', 'review_text', 'created_at']

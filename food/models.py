@@ -56,7 +56,7 @@ class OrderItem(models.Model):
 
 class Review(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # Associate with the user
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)  # Reference to the order
+    order = models.ForeignKey(Order, on_delete=models.CASCADE,null=True)  # Reference to the order
     rating = models.IntegerField()
     review_text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)

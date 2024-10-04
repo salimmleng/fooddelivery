@@ -64,10 +64,10 @@ class OrderSerializer(serializers.ModelSerializer):
 class ReviewSerializer(serializers.ModelSerializer):
     # The 'food_item' field is now a required field
     food_item = serializers.PrimaryKeyRelatedField(queryset=FoodItem.objects.all())
-
+    username = serializers.CharField(source='user.username', read_only=True)
     class Meta:
         model = Review
-        fields = ['id', 'user', 'food_item', 'rating', 'review_text', 'created_at']
+        fields = ['id', 'user', 'username', 'food_item', 'rating', 'review_text', 'created_at']
         read_only_fields = ['user', 'created_at']
 
     def create(self, validated_data):

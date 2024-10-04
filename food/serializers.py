@@ -22,13 +22,15 @@ class FoodItemSerializer(serializers.ModelSerializer):
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
+
+    food_item = serializers.PrimaryKeyRelatedField(queryset=FoodItem.objects.all()) 
     class Meta:
         model = OrderItem
-        fields = ['id', 'name', 'quantity', 'price']
+        fields = ['id', 'food_item', 'name', 'quantity', 'price']
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    order_items = OrderItemSerializer(many=True,required=False)  # Match the related_name in the model
+    order_items = OrderItemSerializer(many=True, required=False)  # Match the related_name in the model
 
     full_name = serializers.CharField(required=False)
     email = serializers.EmailField(required=False)
@@ -40,25 +42,31 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'user', 'full_name', 'email', 'address', 'city', 'card_number', 'expiry_date', 'cvv', 'total_price', 'order_items', 'created_at','order_status']
+        fields = ['id', 'user', 'full_name', 'email', 'address', 'city', 'card_number', 'expiry_date', 'cvv', 'total_price', 'order_items', 'created_at', 'order_status']
         read_only_fields = ["user"]
 
     def create(self, validated_data):
-        order_items_data = validated_data.pop('order_items')  # Match the field name in the serializer
+        # Extract order_items data
+        order_items_data = validated_data.pop('order_items', [])
+        
+        # Create the order
         order = Order.objects.create(**validated_data)
         
-        # Create the OrderItem objects and associate them with the order
+        # Create each order item
         for item_data in order_items_data:
-            OrderItem.objects.create(order=order, **item_data)
+            food_item = item_data.pop('food_item')  # Extract food_item ID
+            OrderItem.objects.create(order=order, food_item=food_item, **item_data)
         
         return order
+
     
 
-
 class ReviewSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(source='user.username', read_only=True)  # Read-only username field
-    order_items = OrderItemSerializer(many=True, source='order.order_items', read_only=True)  # Access related order items
+   
 
     class Meta:
         model = Review
-        fields = ['id', 'username', 'order_items', 'rating', 'review_text', 'created_at']
+        fields = ['id', 'user', 'rating', 'review_text', 'created_at']
+        read_only_fields = ['user', 'created_at']
+
+   

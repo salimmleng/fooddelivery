@@ -98,40 +98,56 @@ class FoodItemsByCategoryAPIView(APIView):
 class CheckoutView(APIView):
     permission_classes = [IsAuthenticated]
 
-    # def post(self, request):
-    #     serializer = OrderSerializer(data=request.data)
-    #     print(request.user)  # Debugging user info
-    #     if serializer.is_valid():
-    #         # Save the order and associate it with the authenticated user
-    #         order = serializer.save(user=request.user)
-    #         return Response({'success': True, 'order_id': order.id,'order_items': order.order_items}, status=status.HTTP_201_CREATED)
-    #     return Response({'success': False, 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
     def post(self, request):
+        # Log incoming request data
+       
         serializer = OrderSerializer(data=request.data)
-        print(request.user)  # Debugging user info
+       
         if serializer.is_valid():
             # Save the order and associate it with the authenticated user
             order = serializer.save(user=request.user)
 
-            # Retrieve order items related to the order
-            order_items = order.order_items.all()  # Assuming a related_name of order_items
+            # Retrieve the order items from the validated data
+            order_items_data = request.data.get('order_items', [])
+            print("Order items data:", order_items_data)  # Log order items
+
+            # Create the associated order items
+            for item_data in order_items_data:
+                # Retrieve the food_item from the database using the provided food_item ID
+                food_item_id = item_data.get('food_item')
+                try:
+                    food_item = FoodItem.objects.get(id=food_item_id)
+                except FoodItem.DoesNotExist:
+                    print(f"Invalid FoodItem ID: {food_item_id}")
+                    return Response({'success': False, 'message': 'Invalid FoodItem ID'}, status=status.HTTP_400_BAD_REQUEST)
+
+                # Capture the name from the frontend, if available, else use food_item's name
+                name = item_data.get('name', food_item.name)
+
+                # Create the OrderItem with the provided name
+                OrderItem.objects.create(
+                    order=order,
+                    food_item=food_item,
+                    name=name,  # Use the name from the request or fallback to food_item.name
+                    quantity=item_data.get('quantity', 1),
+                    price=food_item.price  # Set the price from the food_item
+                )
 
             # Serialize the order items to include in the response
+            order_items = order.order_items.all()
             order_items_data = OrderItemSerializer(order_items, many=True).data
-            
+
             return Response({
                 'success': True,
                 'order_id': order.id,
                 'order_items': order_items_data  # Return serialized order items
             }, status=status.HTTP_201_CREATED)
-        
+
+        # If the serializer is invalid, log errors
+        print("Serializer errors:", serializer.errors)
         return Response({'success': False, 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-
-
     def get(self, request, order_item_id=None, order_id=None, user_id=None):
-
         if order_item_id:
             # Filter orders by order item ID
             try:
@@ -142,6 +158,7 @@ class CheckoutView(APIView):
 
             serializer = OrderSerializer(order)
             return Response({'success': True, 'order': serializer.data}, status=status.HTTP_200_OK)
+
         elif user_id:
             # Retrieve all orders for the specified user ID
             try:
@@ -149,7 +166,7 @@ class CheckoutView(APIView):
                 orders = Order.objects.filter(user=user)
             except User.DoesNotExist:
                 return Response({'success': False, 'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
-            
+
         elif order_id:
             # Retrieve a specific order by ID for the authenticated user
             try:
@@ -160,8 +177,8 @@ class CheckoutView(APIView):
             # Serialize the specific order
             serializer = OrderSerializer(order)
             return Response({'success': True, 'order': serializer.data}, status=status.HTTP_200_OK)
+
         else:
-           
             orders = Order.objects.all()
 
         serializer = OrderSerializer(orders, many=True)
@@ -261,12 +278,72 @@ class CheckoutView(APIView):
 #         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+# class ReviewCreateAPIView(APIView):
+#     permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
+
+#     # POST method for creating a review
+#     def post(self, request, *args, **kwargs):
+#         # Get the authenticated user
+#         user = request.user
+        
+#         # Extract order and review details from the request data
+#         order_id = request.data.get('order')
+#         rating = request.data.get('rating')
+#         review_text = request.data.get('review_text')
+
+#         # Ensure the order exists and belongs to the user
+#         order = get_object_or_404(Order, id=order_id, user=user)
+
+#         # Check if the order status is 'delivered'
+#         if order.order_status != 'delivered':
+#             return Response({'error': 'You can only review an order once it has been delivered.'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Check if the user already left a review for this order
+#         if Review.objects.filter(user=user, order=order).exists():
+#             return Response({'error': 'You have already reviewed this order.'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Create a new review
+#         review = Review.objects.create(
+#             user=user,
+#             order=order,
+#             rating=rating,
+#             review_text=review_text
+#         )
+
+#         # Serialize the newly created review and return a response
+#         serializer = ReviewSerializer(review)
+#         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+#     # GET method for retrieving reviews
+#     def get(self, request, *args, **kwargs):
+#         # Get the authenticated user
+#         user = request.user
+
+#         # Optionally filter reviews by order if an 'order' query parameter is provided
+#         order_id = request.query_params.get('order')
+
+#         if order_id:
+#             # Get reviews for a specific order that belongs to the user
+#             order = get_object_or_404(Order, id=order_id, user=user)
+#             reviews = Review.objects.filter(order=order)
+#         else:
+#             # Get all reviews made by the user
+#             reviews = Review.objects.all()
+
+#         # Serialize the reviews
+#         serializer = ReviewSerializer(reviews, many=True)
+        
+#         # Return the serialized reviews
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+
+
 class ReviewCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
 
-    # POST method for creating a review
     def post(self, request, *args, **kwargs):
-        # Get the authenticated user
         user = request.user
         
         # Extract order and review details from the request data
@@ -274,47 +351,56 @@ class ReviewCreateAPIView(APIView):
         rating = request.data.get('rating')
         review_text = request.data.get('review_text')
 
+        # Ensure required fields are provided
+        if not order_id or not rating or not review_text:
+            return Response({'error': 'Order, rating, and review text are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Ensure rating is a valid integer (between 1 and 5)
+        try:
+            rating = int(rating)
+            if rating < 1 or rating > 5:
+                raise ValueError
+        except ValueError:
+            return Response({'error': 'Rating must be an integer between 1 and 5.'}, status=status.HTTP_400_BAD_REQUEST)
+
         # Ensure the order exists and belongs to the user
         order = get_object_or_404(Order, id=order_id, user=user)
 
         # Check if the order status is 'delivered'
-        if order.order_status != 'delivered':
+        if order.order_status.lower() != 'delivered':  # Case insensitive check
             return Response({'error': 'You can only review an order once it has been delivered.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Check if the user already left a review for this order
         if Review.objects.filter(user=user, order=order).exists():
             return Response({'error': 'You have already reviewed this order.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Create a new review
-        review = Review.objects.create(
-            user=user,
-            order=order,
-            rating=rating,
-            review_text=review_text
-        )
+        # Create a new review using the serializer
+        review_data = {
+            'user': user.id,  # Explicitly assign the user ID
+            'rating': rating,
+            'review_text': review_text
+        }
 
-        # Serialize the newly created review and return a response
-        serializer = ReviewSerializer(review)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        serializer = ReviewSerializer(data=review_data)
+        if serializer.is_valid():
+            review = serializer.save()  # Save the review
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # GET method for retrieving reviews
     def get(self, request, *args, **kwargs):
-        # Get the authenticated user
         user = request.user
 
         # Optionally filter reviews by order if an 'order' query parameter is provided
         order_id = request.query_params.get('order')
 
         if order_id:
-            # Get reviews for a specific order that belongs to the user
             order = get_object_or_404(Order, id=order_id, user=user)
             reviews = Review.objects.filter(order=order)
         else:
-            # Get all reviews made by the user
-            reviews = Review.objects.all()
+            reviews = Review.objects.filter(user=user)  # Get all reviews for the user
 
         # Serialize the reviews
         serializer = ReviewSerializer(reviews, many=True)
-        
+
         # Return the serialized reviews
         return Response(serializer.data, status=status.HTTP_200_OK)

@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import CategoryListView, FoodItemsByCategoryAPIView,CheckoutView,ReviewCreateAPIView
+from .views import CategoryListView, FoodItemsByCategoryAPIView,CheckoutView,ReviewCreateAPIView,ReviewListAPIView
 
 urlpatterns = [
     path('categories/', CategoryListView.as_view(), name='category-list'),
@@ -13,9 +13,10 @@ urlpatterns = [
     path('checkout/user/<int:user_id>/', CheckoutView.as_view(), name='checkout_user'),
     
     path('checkout/order/<int:order_id>/', CheckoutView.as_view(), name='checkout_order'),
+    
     # review
     path('reviews/create/', ReviewCreateAPIView.as_view(), name='create-review'),
-    
-   
+  
+    path('reviews/', ReviewListAPIView.as_view(), name='get-reviews'),
 
 ]

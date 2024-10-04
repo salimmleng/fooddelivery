@@ -62,11 +62,16 @@ class OrderSerializer(serializers.ModelSerializer):
     
 
 class ReviewSerializer(serializers.ModelSerializer):
-   
+    # The 'food_item' field is now a required field
+    food_item = serializers.PrimaryKeyRelatedField(queryset=FoodItem.objects.all())
 
     class Meta:
         model = Review
-        fields = ['id', 'user', 'rating', 'review_text', 'created_at']
+        fields = ['id', 'user', 'food_item', 'rating', 'review_text', 'created_at']
         read_only_fields = ['user', 'created_at']
+
+    def create(self, validated_data):
+        validated_data['user'] = self.context['request'].user 
+        return super().create(validated_data)
 
    

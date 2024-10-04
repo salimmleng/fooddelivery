@@ -343,17 +343,18 @@ class CheckoutView(APIView):
 class ReviewCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
 
+   
     def post(self, request, *args, **kwargs):
         user = request.user
         
-        # Extract order and review details from the request data
-        order_id = request.data.get('order')
+        # Extract food item and review details from the request data
+        food_item_id = request.data.get('food_item')  # Get the food item ID
         rating = request.data.get('rating')
         review_text = request.data.get('review_text')
 
         # Ensure required fields are provided
-        if not order_id or not rating or not review_text:
-            return Response({'error': 'Order, rating, and review text are required.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not food_item_id or not rating or not review_text:
+            return Response({'error': 'Food item, rating, and review text are required.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Ensure rating is a valid integer (between 1 and 5)
         try:
@@ -363,41 +364,56 @@ class ReviewCreateAPIView(APIView):
         except ValueError:
             return Response({'error': 'Rating must be an integer between 1 and 5.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Ensure the order exists and belongs to the user
-        order = get_object_or_404(Order, id=order_id, user=user)
+        # Ensure the food item exists
+        food_item = get_object_or_404(FoodItem, id=food_item_id)
 
-        # Check if the order status is 'delivered'
-        if order.order_status.lower() != 'delivered':  # Case insensitive check
-            return Response({'error': 'You can only review an order once it has been delivered.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Check if the user already left a review for this order
-        if Review.objects.filter(user=user, order=order).exists():
-            return Response({'error': 'You have already reviewed this order.'}, status=status.HTTP_400_BAD_REQUEST)
+        # Check if the user already left a review for this food item
+        if Review.objects.filter(user=user, food_item=food_item).exists():
+            return Response({'error': 'You have already reviewed this food item.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Create a new review using the serializer
         review_data = {
-            'user': user.id,  # Explicitly assign the user ID
+            'food_item': food_item.id,  # Assign the food item ID from the retrieved object
             'rating': rating,
             'review_text': review_text
         }
 
-        serializer = ReviewSerializer(data=review_data)
+        # Use the serializer with the context
+        serializer = ReviewSerializer(data=review_data, context={'request': request})
         if serializer.is_valid():
             review = serializer.save()  # Save the review
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+
+
     def get(self, request, *args, **kwargs):
         user = request.user
+        food_item_id = request.query_params.get('food_item_id')
 
-        # Optionally filter reviews by order if an 'order' query parameter is provided
-        order_id = request.query_params.get('order')
-
-        if order_id:
-            order = get_object_or_404(Order, id=order_id, user=user)
-            reviews = Review.objects.filter(order=order)
+        if food_item_id:
+            reviews = Review.objects.filter(food_item_id=food_item_id)  # Retrieve reviews for the specific food item
         else:
-            reviews = Review.objects.filter(user=user)  # Get all reviews for the user
+            reviews = Review.objects.all()  # Get all reviews for the user
+
+        serializer = ReviewSerializer(reviews, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+
+class ReviewListAPIView(APIView):
+    def get(self, request, *args, **kwargs):
+        food_item_id = request.query_params.get('food_item_id')
+        
+        if not food_item_id:
+            return Response({'error': 'Food item ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Ensure the food item exists
+        food_item = get_object_or_404(FoodItem, id=food_item_id)
+
+        # Retrieve reviews for the specified food item
+        reviews = Review.objects.filter(food_item=food_item)
 
         # Serialize the reviews
         serializer = ReviewSerializer(reviews, many=True)

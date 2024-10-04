@@ -57,10 +57,11 @@ class OrderItem(models.Model):
 
 class Review(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # Associate with the user
-    order = models.ForeignKey(Order, on_delete=models.CASCADE,null=True)  # Reference to the order
+    food_item = models.ForeignKey(FoodItem, on_delete=models.CASCADE,null=True) # Reference to the order
     rating = models.IntegerField()
     review_text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Review by {self.user.username} for Order {self.order.id}"
+        food_item_name = self.food_item.name if self.food_item else "No Food Item"
+        return f"Review by {self.user.username} for Food Item: {food_item_name}"

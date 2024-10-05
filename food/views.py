@@ -99,39 +99,11 @@ class CheckoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        # Log incoming request data
-       
         serializer = OrderSerializer(data=request.data)
-       
+
         if serializer.is_valid():
             # Save the order and associate it with the authenticated user
             order = serializer.save(user=request.user)
-
-            # Retrieve the order items from the validated data
-            order_items_data = request.data.get('order_items', [])
-            print("Order items data:", order_items_data)  # Log order items
-
-            # Create the associated order items
-            for item_data in order_items_data:
-                # Retrieve the food_item from the database using the provided food_item ID
-                food_item_id = item_data.get('food_item')
-                try:
-                    food_item = FoodItem.objects.get(id=food_item_id)
-                except FoodItem.DoesNotExist:
-                    print(f"Invalid FoodItem ID: {food_item_id}")
-                    return Response({'success': False, 'message': 'Invalid FoodItem ID'}, status=status.HTTP_400_BAD_REQUEST)
-
-                # Capture the name from the frontend, if available, else use food_item's name
-                name = item_data.get('name', food_item.name)
-
-                # Create the OrderItem with the provided name
-                OrderItem.objects.create(
-                    order=order,
-                    food_item=food_item,
-                    name=name,  # Use the name from the request or fallback to food_item.name
-                    quantity=item_data.get('quantity', 1),
-                    price=food_item.price  # Set the price from the food_item
-                )
 
             # Serialize the order items to include in the response
             order_items = order.order_items.all()
@@ -146,6 +118,13 @@ class CheckoutView(APIView):
         # If the serializer is invalid, log errors
         print("Serializer errors:", serializer.errors)
         return Response({'success': False, 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
+
 
     def get(self, request, order_item_id=None, order_id=None, user_id=None):
         if order_item_id:
@@ -301,3 +280,6 @@ class ReviewListAPIView(APIView):
 
         # Return the serialized reviews
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+    

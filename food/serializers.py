@@ -29,6 +29,10 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'food_item', 'name', 'quantity', 'price']
 
 
+
+
+
+
 class OrderSerializer(serializers.ModelSerializer):
     order_items = OrderItemSerializer(many=True, required=False)  # Match the related_name in the model
 
@@ -45,24 +49,33 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'full_name', 'email', 'address', 'city', 'card_number', 'expiry_date', 'cvv', 'total_price', 'order_items', 'created_at', 'order_status']
         read_only_fields = ["user"]
 
+
+
     def create(self, validated_data):
-        # Extract order_items data
         order_items_data = validated_data.pop('order_items', [])
         
         # Create the order
         order = Order.objects.create(**validated_data)
         
-        # Create each order item
+        # Create or update each order item
         for item_data in order_items_data:
             food_item = item_data.pop('food_item')  # Extract food_item ID
-            OrderItem.objects.create(order=order, food_item=food_item, **item_data)
+            
+            # Check if the order item already exists
+            existing_item = OrderItem.objects.filter(order=order, food_item=food_item).first()
+            
+            if existing_item:
+                # Update quantity if the item already exists
+                existing_item.quantity += item_data.get('quantity', 1)
+                existing_item.save()
+            else:
+                # Create a new order item if it doesn't exist
+                OrderItem.objects.create(order=order, food_item=food_item, **item_data)
         
         return order
 
+
     
-
-
-
 
 
 class ReviewSerializer(serializers.ModelSerializer):

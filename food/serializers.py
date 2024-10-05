@@ -46,20 +46,36 @@ class OrderSerializer(serializers.ModelSerializer):
         read_only_fields = ["user"]
 
     def create(self, validated_data):
-        # Extract order_items data
+    # Extract order_items data
         order_items_data = validated_data.pop('order_items', [])
-        
-        # Create the order
+
+    # Create the order
         order = Order.objects.create(**validated_data)
-        
-        # Create each order item
+
+    # Create or update each order item
         for item_data in order_items_data:
             food_item = item_data.pop('food_item')  # Extract food_item ID
-            OrderItem.objects.create(order=order, food_item=food_item, **item_data)
+            quantity = item_data.get('quantity', 1)  # Default quantity to 1 if not provided
+
+            # Check if the order item already exists
+            existing_item = OrderItem.objects.filter(order=order, food_item=food_item).first()
         
+            if existing_item:
+                # Update quantity if the item already exists
+                existing_item.quantity += quantity
+                existing_item.save()
+            else:
+                # Create a new order item if it doesn't exist
+                OrderItem.objects.create(order=order, food_item=food_item, quantity=quantity, **item_data)
+
         return order
 
+
     
+
+
+
+
 
 class ReviewSerializer(serializers.ModelSerializer):
     # The 'food_item' field is now a required field

@@ -31,8 +31,6 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 
 
-
-
 class OrderSerializer(serializers.ModelSerializer):
     order_items = OrderItemSerializer(many=True, required=False)  # Match the related_name in the model
 
@@ -79,7 +77,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    # The 'food_item' field is now a required field
+    # 'food_item' field is now a required field
     food_item = serializers.PrimaryKeyRelatedField(queryset=FoodItem.objects.all())
     username = serializers.CharField(source='user.username', read_only=True)
     class Meta:

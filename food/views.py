@@ -5,7 +5,6 @@ from .models import Category, FoodItem,Order,Review,OrderItem
 from django.contrib.auth.models import User
 from rest_framework.permissions import IsAuthenticated
 from .serializers import CategorySerializer, FoodItemSerializer,OrderSerializer,ReviewSerializer,OrderItemSerializer
-# from .permissions import IsAdmin
 from django.contrib.auth import get_user_model
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from .permissions import IsAdminOrReadOnly
@@ -112,10 +111,10 @@ class CheckoutView(APIView):
             return Response({
                 'success': True,
                 'order_id': order.id,
-                'order_items': order_items_data  # Return serialized order items
+                'order_items': order_items_data  
             }, status=status.HTTP_201_CREATED)
 
-        # If the serializer is invalid, log errors
+       
         print("Serializer errors:", serializer.errors)
         return Response({'success': False, 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -128,7 +127,7 @@ class CheckoutView(APIView):
 
     def get(self, request, order_item_id=None, order_id=None, user_id=None):
         if order_item_id:
-            # Filter orders by order item ID
+            
             try:
                 order_item = OrderItem.objects.get(id=order_item_id)
                 order = order_item.order  # Get the order associated with this order item
@@ -165,7 +164,7 @@ class CheckoutView(APIView):
     
 
     def patch(self, request, order_id=None):
-        # Partial update of the order
+        
         if order_id:
             try:
                 order = Order.objects.get(id=order_id)
@@ -188,11 +187,11 @@ class CheckoutView(APIView):
     def delete(self, request, order_id=None):
         if order_id:
             try:
-                order = Order.objects.get(id=order_id, user=request.user)  # Delete for the authenticated user
+                order = Order.objects.get(id=order_id, user=request.user)
             except Order.DoesNotExist:
                 return Response({'success': False, 'message': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
 
-            order.delete()  # Delete the order
+            order.delete() 
             return Response({'success': True, 'message': 'Order deleted successfully'}, status=status.HTTP_200_OK)
         
         return Response({'success': False, 'message': 'Order ID not provided'}, status=status.HTTP_400_BAD_REQUEST)
@@ -201,7 +200,7 @@ class CheckoutView(APIView):
 
 
 class ReviewCreateAPIView(APIView):
-    permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
+    permission_classes = [IsAuthenticated] 
 
    
     def post(self, request, *args, **kwargs):
@@ -233,15 +232,15 @@ class ReviewCreateAPIView(APIView):
 
         # Create a new review using the serializer
         review_data = {
-            'food_item': food_item.id,  # Assign the food item ID from the retrieved object
+            'food_item': food_item.id,  # Assign the food item ID 
             'rating': rating,
             'review_text': review_text
         }
 
-        # Use the serializer with the context
+        
         serializer = ReviewSerializer(data=review_data, context={'request': request})
         if serializer.is_valid():
-            review = serializer.save()  # Save the review
+            review = serializer.save() 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -255,7 +254,7 @@ class ReviewCreateAPIView(APIView):
         if food_item_id:
             reviews = Review.objects.filter(food_item_id=food_item_id)  # Retrieve reviews for the specific food item
         else:
-            reviews = Review.objects.all()  # Get all reviews for the user
+            reviews = Review.objects.all()  # Get all reviews 
 
         serializer = ReviewSerializer(reviews, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -263,6 +262,7 @@ class ReviewCreateAPIView(APIView):
 
 
 class ReviewListAPIView(APIView):
+
     def get(self, request, *args, **kwargs):
         food_item_id = request.query_params.get('food_item_id')
         

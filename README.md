@@ -38,3 +38,12 @@ fooddelivery-lyart.vercel.app
 1. ### Get all foods: [fooddelivery-lyart.vercel.app](https://fooddelivery-lyart.vercel.app/food/food-items/all/)
 2. ### Get foods by category:[fooddelivery-lyart.vercel.app](https://fooddelivery-lyart.vercel.app/food/food-items/pizza/)
 3. ### Reviews: https://fooddelivery-lyart.vercel.app/food/reviews/(foodItem Id)
+
+### Contacts:
+### For any questions or suggestions, feel free to reach out:
+#Name ## Salim Miah
+[![GitHub](https://img.shields.io/badge/GitHub-%2312100E.svg?logo=github&logoColor=white)](https://github.com/salimmleng)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-%230077B5.svg?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/salim-hossaian/)<br>
+### Email:
+   salimmiah0785@gmail.com
+

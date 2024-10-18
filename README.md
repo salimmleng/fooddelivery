@@ -12,7 +12,8 @@ QuickDrop is a fast and smarter food delivery system that simplifies the entire 
 ### Project live link
 fooddelivery-lyart.vercel.app
 
-### How to run project locally
+### If you run the project locally please folllow these process 👇 
+
 1. ### Clone the repository:
        git clone https://github.com/salimmleng/fooddelivery.git
 2. ### Navigate to the project directory:

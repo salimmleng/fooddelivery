@@ -11,3 +11,6 @@ QuickDrop is a fast and smarter food delivery system that simplifies the entire 
 ![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)<br> ![JWT](https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=JSON%20web%20tokens) ![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white) ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
 ### Project live link
 fooddelivery-lyart.vercel.app
+
+### How to run project locally
+1. ### Clone the repository

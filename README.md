@@ -13,4 +13,16 @@ QuickDrop is a fast and smarter food delivery system that simplifies the entire 
 fooddelivery-lyart.vercel.app
 
 ### How to run project locally
-1. ### Clone the repository
+1. ### Clone the repository:
+       git clone https://github.com/salimmleng/fooddelivery.git
+2. ### Navigate to the project directory:
+       cd project-name
+3. ### Install dependencies:
+       pip install -r requirements.txt
+4. ### Set up environment variables (if applicable):
+       Create a .env file in the root directory and set the required environment variables.
+5. ### Apply database migrations:
+       python manage.py migrate
+6. ### Run the project:
+       python manage.py runserver
+       

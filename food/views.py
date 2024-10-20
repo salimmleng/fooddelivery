@@ -121,10 +121,6 @@ class CheckoutView(APIView):
 
 
 
-
-
-
-
     def get(self, request, order_item_id=None, order_id=None, user_id=None):
         if order_item_id:
             

@@ -225,7 +225,7 @@ def payment(request):
         settings = {
             'store_id': 'quick671dd3dff0df1',
             'store_pass': 'quick671dd3dff0df1@ssl',
-            'issandbox': False
+            'issandbox': True
         }
 
        

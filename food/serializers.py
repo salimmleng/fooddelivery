@@ -33,18 +33,14 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     order_items = OrderItemSerializer(many=True, required=False)  # Match the related_name in the model
-
     full_name = serializers.CharField(required=False)
     email = serializers.EmailField(required=False)
     address = serializers.CharField(required=False)
     city = serializers.CharField(required=False)
-    card_number = serializers.CharField(required=False)
-    expiry_date = serializers.CharField(required=False)
-    cvv = serializers.CharField(required=False)
-
+    
     class Meta:
         model = Order
-        fields = ['id', 'user', 'full_name', 'email', 'address', 'city', 'card_number', 'expiry_date', 'cvv', 'total_price', 'order_items', 'created_at', 'order_status']
+        fields = ['id', 'user', 'full_name', 'email', 'address', 'city', 'total_price', 'order_items', 'created_at', 'order_status']
         read_only_fields = ["user"]
 
 

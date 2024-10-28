@@ -32,6 +32,7 @@ ALLOWED_HOSTS = ["127.0.0.1",".vercel.app"]
 
 CORS_ALLOW_ALL_ORIGINS = True 
 # Application definition
+# CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:5500"]
 
 INSTALLED_APPS = [
     'whitenoise.runserver_nostatic',

@@ -195,6 +195,82 @@ class CheckoutView(APIView):
 
 
 
+# for payment gatway
+
+
+from sslcommerz_lib import SSLCOMMERZ
+from django.http import JsonResponse
+import random
+import string
+import json
+from django.views.decorators.csrf import csrf_exempt
+
+def unique_transaction_id__generator(size=10, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for _ in range(size))
+
+
+@csrf_exempt
+def payment(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+
+        # Extract order and payment information from request
+        total_amount = data.get('total_price')
+        full_name = data.get('full_name')
+        email = data.get('email')
+        address = data.get('address')
+        city = data.get('city')
+        cus_phone = "01500000000"  
+
+        settings = {
+            'store_id': 'quick671dd3dff0df1',
+            'store_pass': 'quick671dd3dff0df1@ssl',
+            'issandbox': True
+        }
+
+       
+        sslcz = SSLCOMMERZ(settings)
+        
+        # Define the post body for SSLCOMMERZ session
+        post_body = {
+            'total_amount': total_amount,
+            'currency': "BDT",
+            'tran_id': unique_transaction_id__generator(),
+            'success_url': "http://127.0.0.1:5500/order.html",
+            'fail_url': "http://127.0.0.1:5500/checkout.html",
+            'cancel_url': "http://127.0.0.1:5500/checkout.html",
+            'emi_option': 0,
+            'cus_name': full_name,
+            'cus_email': email,
+            'cus_phone': cus_phone,
+            'cus_add1': address,
+            'cus_city': city,
+            'cus_country': "Bangladesh",
+            'shipping_method': "NO",
+            'num_of_item': len(data.get('order_items', [])),
+            'product_name': "Food Items",
+            'product_category': "Food",
+            'product_profile': "general"
+        }
+
+        # Create SSLCOMMERZ session
+        response = sslcz.createSession(post_body)
+        print(response)
+        if 'GatewayPageURL' in response:
+            return JsonResponse({'GatewayPageURL': response['GatewayPageURL']})
+        else:
+            return JsonResponse({'error': 'Failed to create payment session'}, status=400)
+    else:
+        return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+
+
+
+
+
+
+
+
 class ReviewCreateAPIView(APIView):
     permission_classes = [IsAuthenticated] 
 

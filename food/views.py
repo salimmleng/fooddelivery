@@ -236,7 +236,7 @@ def payment(request):
             'total_amount': total_amount,
             'currency': "BDT",
             'tran_id': unique_transaction_id__generator(),
-            'success_url': "https://salimmleng.github.io/Food-delivery/order.   html",
+            'success_url': "https://salimmleng.github.io/Food-delivery/order.html",
             'fail_url': "https://salimmleng.github.io/Food-delivery/checkout.html",
             'cancel_url': "https://salimmleng.github.io/Food-delivery/checkout.html",
             'emi_option': 0,

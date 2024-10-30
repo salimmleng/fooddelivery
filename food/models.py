@@ -32,8 +32,12 @@ class Order(models.Model):
     address = models.CharField(max_length=255)
     city = models.CharField(max_length=100)
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    transaction_id = models.CharField(max_length=255, unique=True,null=True,blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     order_status = models.CharField(choices=ORDER_STATUS,max_length=20,default='Pending')
+
+    payment_status = models.CharField(max_length=20, default="unpaid")
+    payment_method = models.CharField(max_length=20, default="")
 
     def __str__(self):
         return f"Order {self.id} by {self.user.username}"

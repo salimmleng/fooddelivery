@@ -11,6 +11,8 @@ from .permissions import IsAdminOrReadOnly
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 
+
+
 User = get_user_model()
 
 class CategoryListView(APIView):
@@ -214,14 +216,16 @@ def unique_transaction_id__generator(size=10, chars=string.ascii_uppercase + str
 def payment(request):
     if request.method == 'POST':
         data = json.loads(request.body)
-
+        user_id = data.get('user_id')
+        print(user_id)
+        print(request.user)
         # Extract order and payment information from request
-        total_amount = data.get('total_price')
+        total_price = data.get('total_price')
         full_name = data.get('full_name')
         email = data.get('email')
         address = data.get('address')
         city = data.get('city')
-        cus_phone = "01500000000"  
+        cus_phone = "01500000000"  # Placeholder phone number
 
         settings = {
             'store_id': 'quick671dd3dff0df1',
@@ -229,14 +233,14 @@ def payment(request):
             'issandbox': True
         }
 
-       
         sslcz = SSLCOMMERZ(settings)
-    
+        trans_id = unique_transaction_id__generator()
+
         # Define the post body for SSLCOMMERZ session
         post_body = {
-            'total_amount': total_amount,
+            'total_amount': total_price,
             'currency': "BDT",
-            'tran_id': unique_transaction_id__generator(),
+            'tran_id': trans_id,
             'success_url': "https://fooddelivery-lyart.vercel.app/food/success/",
             'fail_url': "https://fooddelivery-lyart.vercel.app/food/fail/",
             'cancel_url': "https://fooddelivery-lyart.vercel.app/food/cancel/",
@@ -253,16 +257,74 @@ def payment(request):
             'product_category': "Food",
             'product_profile': "general"
         }
+        try:
+            user = User.objects.get(id=user_id)  # Fetch user by ID
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'User not found'}, status=404)
+        
+        print(user)
+        print(trans_id)
 
-        # Create SSLCOMMERZ session
-        response = sslcz.createSession(post_body)
-        print(response)
-        if 'GatewayPageURL' in response:
-            return JsonResponse({'GatewayPageURL': response['GatewayPageURL']})
-        else:
-            return JsonResponse({'error': 'Failed to create payment session'}, status=400)
+        # Ensure user is authenticated before creating the order
+      
+        try:
+            order = Order.objects.create(
+                user=user,
+                transaction_id=trans_id,
+                total_price=total_price,
+                payment_status="pending",
+                payment_method="gateway",
+                full_name=full_name,
+                email=email,
+                address=address,
+                city=city
+                )
+            
+            request.session['order_id'] = order.id
+
+            # Create SSLCOMMERZ session
+            response = sslcz.createSession(post_body)
+            if 'GatewayPageURL' in response:
+                return JsonResponse({'GatewayPageURL': response['GatewayPageURL']})
+            else:
+                return JsonResponse({'error': 'Failed to create payment session'}, status=400)
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+
+
+
+@csrf_exempt
+def payment_success(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        
+        # Capture the unique transaction ID sent back by SSLCOMMERZ
+        transaction_id = data.get('tran_id')  # Or another identifier used by SSLCOMMERZ
+
+        try:
+            # Retrieve the order using the transaction ID
+            order = Order.objects.get(transaction_id=transaction_id)
+
+            # Update payment status and method
+            order.payment_status = "paid"
+            order.payment_method = "gateway"
+            order.save()
+
+            return JsonResponse({'success': 'Order payment confirmed and updated.'})
+
+        except Order.DoesNotExist:
+            return JsonResponse({'error': 'Order not found.'}, status=404)
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+
+
+
+
+
 
 
 

@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from .permissions import IsAdminOrReadOnly
 from django.shortcuts import get_object_or_404
+from django.shortcuts import render
 
 User = get_user_model()
 
@@ -230,15 +231,15 @@ def payment(request):
 
        
         sslcz = SSLCOMMERZ(settings)
-        
+    
         # Define the post body for SSLCOMMERZ session
         post_body = {
             'total_amount': total_amount,
             'currency': "BDT",
             'tran_id': unique_transaction_id__generator(),
-            'success_url': "https://salimmleng.github.io/Food-delivery/order.html",
-            'fail_url': "https://salimmleng.github.io/Food-delivery/checkout.html",
-            'cancel_url': "https://salimmleng.github.io/Food-delivery/checkout.html",
+            'success_url': "https://fooddelivery-lyart.vercel.app/food/success/",
+            'fail_url': "https://fooddelivery-lyart.vercel.app/food/fail/",
+            'cancel_url': "https://fooddelivery-lyart.vercel.app/food/cancel/",
             'emi_option': 0,
             'cus_name': full_name,
             'cus_email': email,
@@ -265,6 +266,17 @@ def payment(request):
 
 
 
+@csrf_exempt
+def PaymentSuccessView(request):
+    return render(request, "success.html")
+
+@csrf_exempt
+def PaymentFailView(request):
+    return render(request, "fail.html")
+
+@csrf_exempt
+def PaymentCancelView(request):
+    return render(request, "cancel.html")
 
 
 

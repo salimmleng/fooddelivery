@@ -228,8 +228,8 @@ def payment(request):
         cus_phone = "01500000000"  # Placeholder phone number
 
         settings = {
-            'store_id': 'quick671dd3dff0df1',
-            'store_pass': 'quick671dd3dff0df1@ssl',
+            'store_id': 'quick672318e13dcd0',
+            'store_pass': 'quick672318e13dcd0@ssl',
             'issandbox': True
         }
 
@@ -241,7 +241,7 @@ def payment(request):
             'total_amount': total_price,
             'currency': "BDT",
             'tran_id': trans_id,
-            'success_url': "http://127.0.0.1:8000/food/success/",
+            'success_url': "https://fooddelivery-lyart.vercel.app/food/success/",
             'fail_url': "https://fooddelivery-lyart.vercel.app/food/fail/",
             'cancel_url': "https://fooddelivery-lyart.vercel.app/food/cancel/",
             'emi_option': 0,

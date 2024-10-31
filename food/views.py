@@ -241,7 +241,7 @@ def payment(request):
             'total_amount': total_price,
             'currency': "BDT",
             'tran_id': trans_id,
-            'success_url': "https://fooddelivery-lyart.vercel.app/food/success/",
+            'success_url': "http://127.0.0.1:8000/food/success/",
             'fail_url': "https://fooddelivery-lyart.vercel.app/food/fail/",
             'cancel_url': "https://fooddelivery-lyart.vercel.app/food/cancel/",
             'emi_option': 0,
@@ -280,12 +280,14 @@ def payment(request):
                 city=city
                 )
             
-            request.session['order_id'] = order.id
-
             # Create SSLCOMMERZ session
             response = sslcz.createSession(post_body)
             if 'GatewayPageURL' in response:
-                return JsonResponse({'GatewayPageURL': response['GatewayPageURL']})
+                order_data = {
+                    'transaction_id': order.transaction_id,
+
+                }
+                return JsonResponse({'GatewayPageURL': response['GatewayPageURL'], 'order_data': order_data})
             else:
                 return JsonResponse({'error': 'Failed to create payment session'}, status=400)
 
@@ -302,7 +304,8 @@ def payment_success(request):
         data = json.loads(request.body)
         
         # Capture the unique transaction ID sent back by SSLCOMMERZ
-        transaction_id = data.get('tran_id')  # Or another identifier used by SSLCOMMERZ
+        transaction_id = data.get('transaction_id')  # Or another identifier used by SSLCOMMERZ
+        print(transaction_id)
 
         try:
             # Retrieve the order using the transaction ID

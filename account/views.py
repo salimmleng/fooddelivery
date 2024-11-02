@@ -19,6 +19,14 @@ from . import models
 
 
 User = get_user_model()
+
+class RegisteredUsersCount(APIView):
+   
+    def get(self, request):
+        users_count = User.objects.count()  # Count all users in the database
+        return Response({"registered_users": users_count})
+
+
 class UserRegistrationView(APIView):
         permission_classes = [AllowAny] 
         serializer_class = UserRegistrationSerializer

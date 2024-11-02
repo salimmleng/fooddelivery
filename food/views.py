@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Category, FoodItem,Order,Review,OrderItem
+from .models import Category, FoodItem,Order,Review,OrderItem,Payment
 from django.contrib.auth.models import User
 from rest_framework.permissions import IsAuthenticated
 from .serializers import CategorySerializer, FoodItemSerializer,OrderSerializer,ReviewSerializer,OrderItemSerializer
@@ -10,6 +10,7 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from .permissions import IsAdminOrReadOnly
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
+from django.db.models import Count
 
 
 
@@ -31,6 +32,9 @@ class CategoryListView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
 
 
 
@@ -93,7 +97,21 @@ class FoodItemsByCategoryAPIView(APIView):
         return Response({'detail': 'Food item deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
     
 
+class CategoryMenuCountAPIView(APIView):
+    permission_classes = [IsAdminOrReadOnly]
 
+    def get(self, request):
+        categories = Category.objects.annotate(menu_count=Count('food_items'))  
+        response_data = [
+            {
+                'id': category.id,
+                'name': category.name,
+                'menu_count': category.menu_count
+            }
+            for category in categories
+        ]
+        
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 
@@ -225,13 +243,21 @@ def payment(request):
         email = data.get('email')
         address = data.get('address')
         city = data.get('city')
-        cus_phone = "01500000000"  # Placeholder phone number
+        cus_phone = "01500000000"
 
+        # for production
         settings = {
             'store_id': 'quick672318e13dcd0',
             'store_pass': 'quick672318e13dcd0@ssl',
             'issandbox': True
         }
+
+        # for local
+        # settings = {
+        #     'store_id': 'quick671dd3dff0df1',
+        #     'store_pass': 'quick671dd3dff0df1@ssl',
+        #     'issandbox': True
+        # }
 
         sslcz = SSLCOMMERZ(settings)
         trans_id = unique_transaction_id__generator()
@@ -258,41 +284,37 @@ def payment(request):
             'product_profile': "general"
         }
         try:
-            user = User.objects.get(id=user_id)  # Fetch user by ID
+            user = User.objects.get(id=user_id)  
         except User.DoesNotExist:
             return JsonResponse({'error': 'User not found'}, status=404)
         
         print(user)
         print(trans_id)
 
-        # Ensure user is authenticated before creating the order
-      
-        try:
-            order = Order.objects.create(
-                user=user,
-                transaction_id=trans_id,
-                total_price=total_price,
-                payment_status="pending",
-                payment_method="gateway",
-                full_name=full_name,
-                email=email,
-                address=address,
-                city=city
-                )
-            
-            # Create SSLCOMMERZ session
-            response = sslcz.createSession(post_body)
-            if 'GatewayPageURL' in response:
-                order_data = {
-                    'transaction_id': order.transaction_id,
+        payment = Payment.objects.create(
+            transaction_id=trans_id,
+            user=user,
+            user_id=user_id,
+            status="initiated",  
+            total_price=total_price,
+            method="gateway",  
+            full_name=full_name,
+            email=email,
+            address=address,
+            city=city,
+        )
 
-                }
-                return JsonResponse({'GatewayPageURL': response['GatewayPageURL'], 'order_data': order_data})
-            else:
-                return JsonResponse({'error': 'Failed to create payment session'}, status=400)
+       
+        response = sslcz.createSession(post_body)
+        if 'GatewayPageURL' in response:
+            return JsonResponse({
+                'GatewayPageURL': response['GatewayPageURL'],
+                'transaction_id': trans_id
+            })
+        else:
+            return JsonResponse({'error': 'Failed to create payment session'}, status=400)
 
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+       
     return JsonResponse({'error': 'Invalid request method'}, status=405)
 
 
@@ -303,18 +325,18 @@ def payment_success(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         
-        # Capture the unique transaction ID sent back by SSLCOMMERZ
-        transaction_id = data.get('transaction_id')  # Or another identifier used by SSLCOMMERZ
+        # Capture unique transaction ID sent back by SSLCOMMERZ
+        transaction_id = data.get('transaction_id')
         print(transaction_id)
 
         try:
-            # Retrieve the order using the transaction ID
-            order = Order.objects.get(transaction_id=transaction_id)
+            # Update payment status for the transaction
+            payment = Payment.objects.get(transaction_id=transaction_id)
+            payment.status = "paid"
+            payment.method = "gateway"
+            payment.save()
 
-            # Update payment status and method
-            order.payment_status = "paid"
-            order.payment_method = "gateway"
-            order.save()
+            request.session['payment_confirmed'] = True
 
             return JsonResponse({'success': 'Order payment confirmed and updated.'})
 
@@ -322,11 +344,6 @@ def payment_success(request):
             return JsonResponse({'error': 'Order not found.'}, status=404)
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=405)
-
-
-
-
-
 
 
 

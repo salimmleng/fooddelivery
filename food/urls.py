@@ -1,11 +1,15 @@
 from django.urls import path
-from .views import CategoryListView, FoodItemsByCategoryAPIView,CheckoutView,ReviewCreateAPIView,ReviewListAPIView,payment,PaymentCancelView,PaymentFailView,PaymentSuccessView,payment_success
+from .views import CategoryListView, FoodItemsByCategoryAPIView,CheckoutView,ReviewCreateAPIView,ReviewListAPIView,payment,PaymentCancelView,PaymentFailView,PaymentSuccessView,payment_success,CategoryMenuCountAPIView
 
 urlpatterns = [
     path('categories/', CategoryListView.as_view(), name='category-list'),
     path('food-items/<str:category_name>/', FoodItemsByCategoryAPIView.as_view(), name='food-items-by-category'),
     path('food-item/<int:id>/', FoodItemsByCategoryAPIView.as_view(), name='food-item-detail'),
     path('checkout/', CheckoutView.as_view(), name='checkout'),
+
+    # count menu items
+
+    path('categories/count/', CategoryMenuCountAPIView.as_view(), name='category-menu-count'),
 
 
     path('checkout/order-item/<int:order_item_id>/', CheckoutView.as_view(), name='order-by-item'),

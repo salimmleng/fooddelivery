@@ -448,4 +448,10 @@ class ReviewListAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 
+class ReviewAllAPIView(APIView):
+
+   def get(self, request, *args, **kwargs):
+        review = Review.objects.all()
+        serializer = ReviewSerializer(review, many=True)  # many = true mane serializer ke bola je ami tomalke list of object dissi. cause by default serializer expects a single object.
+        return Response(serializer.data, status=status.HTTP_200_OK)
     

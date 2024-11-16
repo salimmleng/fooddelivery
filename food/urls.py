@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import CategoryListView, FoodItemsByCategoryAPIView,CheckoutView,ReviewCreateAPIView,ReviewListAPIView,payment,PaymentCancelView,PaymentFailView,PaymentSuccessView,payment_success,CategoryMenuCountAPIView
+from .views import CategoryListView, FoodItemsByCategoryAPIView,CheckoutView,ReviewCreateAPIView,ReviewListAPIView,payment,PaymentCancelView,PaymentFailView,PaymentSuccessView,payment_success,CategoryMenuCountAPIView,ReviewAllAPIView
 
 urlpatterns = [
     path('categories/', CategoryListView.as_view(), name='category-list'),
@@ -22,6 +22,7 @@ urlpatterns = [
     path('reviews/create/', ReviewCreateAPIView.as_view(), name='create-review'),
   
     path('reviews/', ReviewListAPIView.as_view(), name='get-reviews'),
+     path('reviews_all/', ReviewAllAPIView.as_view(), name='get-reviews'),
 
     # payment
 
